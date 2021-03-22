@@ -65,6 +65,39 @@ class Rsc(Object):
                     output.write(data)
 
         logging.info("*** End RSC file... ***")
+
+class Atr(Object):
+    def __init__(self, stream):
+        value_assert(stream.read(3), b'ATR', "magic number")
+        self.name = stream.read(0x10).replace(b'\x00', b'').decode("utf-8")
+        self.background = stream.read(0x20).replace(b'\x00', b'').decode("utf-8")
+        unk1 = struct.unpack("<L", stream.read(4))[0]
+        value_assert(stream.read(4), b'\x00'*4)
+
+        self.width = struct.unpack("<L", stream.read(4))[0]
+        self.height = struct.unpack("<L", stream.read(4))[0]
+        frame_count = struct.unpack("<L", stream.read(4))[0]
+
+        self.frames = []
+        for _ in range(frame_count):
+            entity = AtrFrame(stream)
+            self.frames.append(entity)
+            print(entity.__dict__)
+            utils.hexdump(entity.data.read())
+            print()
+
+class AtrFrame(Object):
+    def __init__(self, stream):
+        self.start = struct.unpack("<L", stream.read(4))[0]
+        self.end = struct.unpack("<L", stream.read(4))[0]
+        self.width = struct.unpack("<L", stream.read(4))[0]
+        self.height = struct.unpack("<L", stream.read(4))[0]
+
+        value_assert(stream.read(4), b'\x00'*4)
+        value_assert(stream.read(8), b'\xff'*8)
+        self.length = struct.unpack("<L", stream.read(4))[0]
+        self.data = io.BytesIO(stream.read(self.length))
+
 def process(filename):
     logging.debug("Processing file: {}".format(filename))
     with open(filename, mode='rb') as f:

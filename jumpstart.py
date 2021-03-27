@@ -71,19 +71,23 @@ class Atr(Object):
         value_assert(stream.read(3), b'ATR', "magic number")
         self.name = stream.read(0x10).replace(b'\x00', b'').decode("utf-8")
         self.background = stream.read(0x20).replace(b'\x00', b'').decode("utf-8")
+        logging.debug("Atr: Name: {} \\ Background: {}".format(self.name, self.background))
         unk1 = struct.unpack("<L", stream.read(4))[0]
+        logging.debug("Atr: Unk1: {}".format(unk1))
         value_assert(stream.read(4), b'\x00'*4)
 
         self.width = struct.unpack("<L", stream.read(4))[0]
         self.height = struct.unpack("<L", stream.read(4))[0]
         frame_count = struct.unpack("<L", stream.read(4))[0]
+        logging.debug("Atr: Expecting {} frames ({} x {})".format(frame_count, self.width, self.height))
 
         self.frames = []
-        for _ in range(frame_count):
+        for i in range(frame_count):
+            logging.debug("Atr: Reading frame {}:".format(i))
             entity = AtrFrame(stream)
             self.frames.append(entity)
-            print(entity.__dict__)
-            utils.hexdump(entity.data.read())
+            logging.debug(entity.__dict__)
+
             print()
 
 class AtrFrame(Object):
@@ -93,10 +97,15 @@ class AtrFrame(Object):
         self.width = struct.unpack("<L", stream.read(4))[0]
         self.height = struct.unpack("<L", stream.read(4))[0]
 
-        value_assert(stream.read(4), b'\x00'*4)
-        value_assert(stream.read(8), b'\xff'*8)
+        unk1 = struct.unpack("<L", stream.read(4))[0]
+        logging.debug("AtrFrame: Unk1: {}".format(unk1))
+
+        unk2 = stream.read(8)
+        logging.debug("AtrFrame: Unk2: {}".format(unk2))
+
         self.length = struct.unpack("<L", stream.read(4))[0]
-        self.data = io.BytesIO(stream.read(self.length))
+        logging.debug("(@0x{:012x}) AtrFrame: Reading 0x{:04x} bytes".format(stream.tell(), self.length))
+        utils.hexdump(stream.read(self.length))
 
 def process(filename):
     logging.debug("Processing file: {}".format(filename))

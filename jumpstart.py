@@ -69,15 +69,15 @@ class Rsc(Object):
 
 class Xdt(Object): # SDT (SND) or TDT (TLK)
     def __init__(self, stream, snd):
-        self.snd = snd
-        with open(self.snd) as s:
-            self.length = len(s.read())
+        # TODO: Determine how many embedded WAVs there are in advance.
+        snd.seek(0)
+        length = os.fstat(snd.fileno()).st_size
 
         self.records = []
-        record = XdtRecord(stream, s)
-        while record.end >= self.length:
+        record = XdtRecord(stream, snd)
+        while record.end < length:
             self.records.append(record)
-            record = XdtRecord(stream, s)
+            record = XdtRecord(stream, snd)
 
         self.records.append(record)
 

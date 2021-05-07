@@ -66,6 +66,32 @@ class Rsc(Object):
 
         logging.info("*** End RSC file... ***")
 
+
+class Xdt(Object): # SDT (SND) or TDT (TLK)
+    def __init__(self, stream, snd):
+        self.snd = snd
+        with open(self.snd) as s:
+            self.length = len(s.read())
+
+        self.records = []
+        record = XdtRecord(stream, s)
+        while record.end >= self.length:
+            self.records.append(record)
+            record = XdtRecord(stream, s)
+
+        self.records.append(record)
+
+class XdtRecord(Object):
+    def __init__(self, stream, snd):
+        # 0x2e: In the master SND/TLK, there are 0x2e bytes of header
+        # information before the audio data begins.
+        self.name = stream.read(0x0c).replace(b'\x00', b'').decode("utf-8")
+        self.start = struct.unpack("<L", stream.read(4))[0] + 0x2e
+        self.end = struct.unpack("<L", stream.read(4))[0] + 0x2e
+
+        snd.seek(self.start)
+        self.data = snd.read(self.end - self.start)
+
 class Atr(Object):
     def __init__(self, stream):
         value_assert(stream.read(3), b'ATR', "magic number")

@@ -113,15 +113,16 @@ class Atr(Object):
             entity = AtrFrame(stream)
             self.frames.append(entity)
             logging.debug(entity.__dict__)
+            logging.debug("Frame Dimensions: {} x {}".format(entity.right-entity.left, entity.bottom-entity.top))
 
             print()
 
 class AtrFrame(Object):
     def __init__(self, stream):
-        self.start = struct.unpack("<L", stream.read(4))[0]
-        self.end = struct.unpack("<L", stream.read(4))[0]
-        self.width = struct.unpack("<L", stream.read(4))[0]
-        self.height = struct.unpack("<L", stream.read(4))[0]
+        self.left = struct.unpack("<L", stream.read(4))[0]
+        self.top = struct.unpack("<L", stream.read(4))[0]
+        self.right = struct.unpack("<L", stream.read(4))[0]
+        self.bottom = struct.unpack("<L", stream.read(4))[0]
 
         unk1 = struct.unpack("<L", stream.read(4))[0]
         logging.debug("AtrFrame: Unk1: {}".format(unk1))
@@ -132,6 +133,14 @@ class AtrFrame(Object):
         self.length = struct.unpack("<L", stream.read(4))[0]
         logging.debug("(@0x{:012x}) AtrFrame: Reading 0x{:04x} bytes".format(stream.tell(), self.length))
         utils.hexdump(stream.read(self.length))
+
+    @property
+    def width(self):
+        return self.right-self.left
+
+    @property
+    def height(self):
+        return self.bottom-self.top
 
 def process(filename):
     logging.debug("Processing file: {}".format(filename))

@@ -96,7 +96,8 @@ class Atr(Object):
     def __init__(self, stream):
         value_assert(stream.read(3), b'ATR', "magic number")
         self.name = stream.read(0x10).replace(b'\x00', b'').decode("utf-8")
-        self.background = stream.read(0x20).replace(b'\x00', b'').decode("utf-8")
+        self.background = stream.read(0x10).replace(b'\x00', b'').decode("utf-8")
+        self.name2 = stream.read(0x10).replace(b'\x00', b'').decode("utf-8")
         logging.debug("Atr: Name: {} \\ Background: {}".format(self.name, self.background))
         unk1 = struct.unpack("<L", stream.read(4))[0]
         logging.debug("Atr: Unk1: {}".format(unk1))
